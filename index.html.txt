@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Учим неправильные глаголы</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      touch-action: manipulation;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .verb {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .translation, .question-type {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 15px;
+    }
+    .button, .option-button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      border: none;
+      background-color: #007BFF;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      max-width: 300px;
+    }
+    .option-button.correct {
+      background-color: #e6ffe6 !important;
+      border: 2px solid green;
+      color: green;
+      font-weight: bold;
+    }
+    .option-button.incorrect {
+      background-color: red !important;
+      box-shadow: 0 0 10px red;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+    }
+    #modeSelect {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #backButton {
+      margin-top: 20px;
+      background-color: #999;
+    }
+    #nextButton {
+      background-color: green;
+      font-size: 18px;
+    }
+    #correctAnswerDisplay {
+      margin-top: 10px;
+      color: #333;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="modeSelect">
+    <div class="verb">Выберите режим:</div>
+    <button class="button" onclick="startMode('forms')">Формы глаголов</button>
+    <button class="button" onclick="startMode('translation')">Перевод</button>
+    <button class="button" onclick="startMode('writeForms')">Письменность форм</button>
+  </div>
+
+  <div class="card" id="quizCard" style="display:none;">
+    <div id="questionType" class="question-type"></div>
+    <div id="question" class="verb"></div>
+    <div class="options" id="options"></div>
+    <div id="correctAnswerDisplay"></div>
+    <button id="nextButton" class="button" style="display:none;">Следующий</button>
+    <button id="backButton" class="button" onclick="goBack()">Назад</button>
+  </div>
+
+  <script>
+    const verbs = [
+      { base: "say", past: "said", participle: "said", translation: "говорить" },
+      { base: "see", past: "saw", participle: "seen", translation: "видеть" },
+      { base: "sell", past: "sold", participle: "sold", translation: "продавать" },
+      { base: "send", past: "sent", participle: "sent", translation: "отправлять" },
+      { base: "set", past: "set", participle: "set", translation: "устанавливать" },
+      { base: "sew", past: "sewed", participle: "sewn", translation: "шить" },
+      { base: "shake", past: "shook", participle: "shaken", translation: "трясти" },
+      { base: "shine", past: "shone", participle: "shone", translation: "светить" },
+      { base: "shoot", past: "shot", participle: "shot", translation: "стрелять" },
+      { base: "show", past: "showed", participle: "shown", translation: "показывать" },
+      { base: "shut", past: "shut", participle: "shut", translation: "закрывать" },
+      { base: "sing", past: "sang", participle: "sung", translation: "петь" },
+      { base: "sit", past: "sat", participle: "sat", translation: "сидеть" },
+      { base: "sleep", past: "slept", participle: "slept", translation: "спать" },
+      { base: "smell", past: "smelt", participle: "smelt", translation: "пахнуть" },
+      { base: "speak", past: "spoke", participle: "spoken", translation: "говорить" },
+      { base: "spell", past: "spelt", participle: "spelt", translation: "произносить по буквам" },
+      { base: "spend", past: "spent", participle: "spent", translation: "тратить" },
+      { base: "stand", past: "stood", participle: "stood", translation: "стоять" },
+      { base: "steal", past: "stole", participle: "stolen", translation: "красть" },
+      { base: "stick", past: "stuck", participle: "stuck", translation: "приклеивать" },
+      { base: "sting", past: "stung", participle: "stung", translation: "жалить" },
+      { base: "swear", past: "swore", participle: "sworn", translation: "клясться" },
+      { base: "sweep", past: "swept", participle: "swept", translation: "подметать" },
+      { base: "swim", past: "swam", participle: "swum", translation: "плавать" }
+    ];
+
+    let currentVerb = null;
+    let currentMode = '';
+    let correctAnswer = '';
+    let step = 0;
+
+    function startMode(mode) {
+      currentMode = mode;
+      document.getElementById('modeSelect').style.display = 'none';
+      document.getElementById('quizCard').style.display = 'flex';
+      nextQuestion();
+    }
+
+    function goBack() {
+      document.getElementById('quizCard').style.display = 'none';
+      document.getElementById('modeSelect').style.display = 'flex';
+    }
+
+    function nextQuestion() {
+      currentVerb = verbs[Math.floor(Math.random() * verbs.length)];
+      document.getElementById('nextButton').style.display = 'none';
+      document.getElementById('correctAnswerDisplay').innerText = '';
+
+      if (currentMode === 'writeForms') {
+        step = 1;
+        askForm('past');
+      } else if (currentMode === 'forms') {
+        const type = Math.random() > 0.5 ? 'past' : 'participle';
+        document.getElementById('questionType').innerText = type === 'past' ? 'Выберите Past Simple:' : 'Выберите Past Participle:';
+        document.getElementById('question').innerText = currentVerb.base;
+        correctAnswer = currentVerb[type];
+        const options = [correctAnswer];
+        while (options.length < 4) {
+          const fake = verbs[Math.floor(Math.random() * verbs.length)][type];
+          if (!options.includes(fake)) options.push(fake);
+        }
+        renderOptions(shuffleArray(options));
+      } else {
+        document.getElementById('questionType').innerText = 'Выберите перевод:';
+        document.getElementById('question').innerText = currentVerb.base;
+        correctAnswer = currentVerb.translation;
+        const options = [correctAnswer];
+        while (options.length < 4) {
+          const fake = verbs[Math.floor(Math.random() * verbs.length)].translation;
+          if (!options.includes(fake)) options.push(fake);
+        }
+        renderOptions(shuffleArray(options));
+      }
+    }
+
+    function askForm(type) {
+      document.getElementById('questionType').innerText = type === 'past' ? 'Выберите 2 форму:' : 'Выберите 3 форму:';
+      let label = currentVerb.base;
+      if (step === 2 && document.getElementById('question').dataset.wrong) {
+        label += ` (правильно: ${currentVerb.past})`;
+      }
+      document.getElementById('question').innerText = label;
+      document.getElementById('question').dataset.wrong = '';
+      correctAnswer = currentVerb[type];
+      const options = [correctAnswer];
+      while (options.length < 4) {
+        const fake = mutateWord(correctAnswer);
+        if (!options.includes(fake)) options.push(fake);
+      }
+      renderOptions(shuffleArray(options), () => {
+        if (type === 'past') {
+          step = 2;
+          askForm('participle');
+        } else {
+          document.getElementById('nextButton').style.display = 'block';
+        }
+      });
+    }
+
+    function mutateWord(word) {
+      const letters = 'abcdefghijklmnopqrstuvwxyz';
+      let index = Math.floor(Math.random() * word.length);
+      let newChar = letters[Math.floor(Math.random() * letters.length)];
+      return word.substring(0, index) + newChar + word.substring(index + 1);
+    }
+
+    function renderOptions(options, callback) {
+      const container = document.getElementById('options');
+      container.innerHTML = '';
+      options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'option-button';
+        btn.innerText = option;
+        btn.onclick = () => {
+          document.querySelectorAll('.option-button').forEach(b => {
+            b.disabled = true;
+            if (b.innerText === correctAnswer) {
+              b.classList.add('correct');
+            }
+          });
+          if (option !== correctAnswer) {
+            btn.classList.add('incorrect');
+            document.getElementById('question').dataset.wrong = 'true';
+          }
+          if (callback) callback();
+          else document.getElementById('nextButton').style.display = 'block';
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    document.getElementById('nextButton').addEventListener('click', nextQuestion);
+  </script>
+</body>
+</html>
